@@ -9,7 +9,7 @@ export default function Home() {
         </div>
         <div>
           <img src='jiji.png' alt="Description" width='400' height='400' />
-        </div>
+        </div>   
         <div style={{ position: 'absolute', top: '55%', right: '50%'}}>
           <img src='cat.gif' alt="Description" width='300' height='300' />
         </div>
