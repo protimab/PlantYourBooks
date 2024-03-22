@@ -122,6 +122,29 @@ def get_authors():
     conn.close()
     return jsonify(authors)
 
+@app.route('/api/users', methods=["POST"])
+def post_added_courses():
+    try:
+        data = request.json
+        print(data)
+        username = data.get('username')
+        email = data.get('email')
+        join_date = data.get('join_date')
+        profile_picture = data.get('profile_picture')
+        bio = data.get('bio')
+        conn = sqlite3.connect(DB_FILE)
+        c = conn.cursor()
+
+        c.execute("INSERT INTO users (username, email, join_date, profile_picture, bio) VALUES (?, ?, ?, ?, ?)",
+                  (username, email, join_date, profile_picture, bio))
+        conn.commit()
+        conn.close()
+
+        return jsonify({"message": "Course added successfully"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 if __name__ == '__main__':
     create_tables()
     app.run(debug=True, port=5001)
