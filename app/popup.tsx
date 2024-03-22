@@ -3,7 +3,10 @@ import axios from 'axios';
 
 interface PopupProps {
   onClose: () => void;
-  onAddUser: (user: User) => void;
+  onAddUser?: (user: User) => void;
+  onAddBook?: (book: Book) => void;
+  onAddGenre?: (genreName: string) => void; 
+  onAddAuthor?: (authorName: string) => void;
 }
 
 interface User {
@@ -11,90 +14,243 @@ interface User {
   username: string;
   email: string;
   join_date: string;
-  profile_picture: string;
   bio: string;
 }
 
-const Popup: React.FC<PopupProps> = ({ onClose, onAddUser }) => {
+interface Book {
+  bookID: number,
+  bookName: string;
+  authorName: string;
+  genreName: string;
+  synopsis: string;
+}
+
+const Popup: React.FC<PopupProps> = ({ onClose, onAddUser, onAddBook, onAddGenre, onAddAuthor}) => {
   const [showPopup, setShowPopup] = useState(false);
   const [user, setUser] = useState<User>({
     userID: 0,
     username: '',
     email: '',
     join_date: '',
-    profile_picture: '',
     bio: ''
   });
+  const [book, setBook] = useState<Book>({
+    bookID: 0,
+    bookName: '',
+    authorName: '',
+    genreName: '',
+    synopsis: ''
+  });
+  const [genreName, setGenreName] = useState('');
+  const [authorName, setAuthorName] = useState('');
+  const [emailError, setEmailError] = useState<string>('');
+  const [isFormValid, setIsFormValid] = useState(false);
 
   useEffect(() => {
     setShowPopup(true);
   }, []);
 
+  useEffect(() => {
+    validateForm();
+  }, [user]);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setUser({ ...user, [name]: value });
+    validateForm(); 
+  };
+
+  const validateForm = () => {
+    // check if all required fields are filled out
+    if (user.username && user.email && user.join_date && user.bio) {
+      setIsFormValid(true);
+    } else {
+      setIsFormValid(false);
+    }
+  };
+  
   const handleClosePopup = () => {
     setShowPopup(false);
     onClose();
   };
 
   const handleAddUser = () => {
-    onAddUser(user);
-    setShowPopup(false);
+    if (onAddUser) {
+      onAddUser(user);
+      setShowPopup(false);
+    }
+  };
+
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const email = e.target.value;
+    setUser({ ...user, email });
+    
+    // Email validation
+    if (!validateEmail(email)) {
+      setEmailError("Invalid email format");
+    } else {
+      setEmailError("");
+    }
+  };
+  
+  const validateEmail = (email: string) => {
+    const re = /\S+@\S+\.\S+/;
+    return re.test(email);
+  };
+
+  const handleAddBook = () => {
+    if (onAddBook) {
+      onAddBook(book);
+      setShowPopup(false);
+    }
+  };
+ 
+  const handleAddGenre = () => {
+    if (onAddGenre) {
+      onAddGenre(genreName);
+      setShowPopup(false);
+    }
+  };
+
+  const handleAddAuthor = () => {
+    if (onAddAuthor) {
+      onAddAuthor(authorName);
+      setShowPopup(false);
+    }
   };
 
   return (
-    <div className={`fixed top-0 left-0 w-full h-full bg-gray-800 bg-opacity-50 flex items-center justify-center ${showPopup ? '' : 'hidden'}`}>
-      <div className="bg-black p-6 rounded shadow-lg relative">
-        <button
-          onClick={handleClosePopup}
-          className="absolute top-1 right-2 text-white hover:text-gray-300"
-        >
+    <div
+      className={`fixed top-0 left-0 w-full h-full bg-gray-800 bg-opacity-50 flex items-center justify-center ${
+        showPopup ? '' : 'hidden'
+      }`}
+    >
+      <div className="bg-emerald-600 p-6 rounded shadow-lg relative">
+        <button onClick={handleClosePopup} className="absolute top-1 right-2 text-white hover:text-gray-300 size-3">
           x
         </button>
-        <div>
-          <h2 className="text-2xl mb-4">Add User</h2>
-          <input
-            type="text"
-            value={user.username}
-            onChange={(e) => setUser({ ...user, username: e.target.value })}
-            placeholder="Username"
-            className="border border-gray-300 rounded-md px-3 py-2 mb-2 w-full text-black"
-          />
-          <input
-            type="email"
-            value={user.email}
-            onChange={(e) => setUser({ ...user, email: e.target.value })}
-            placeholder="Email"
-            className="border border-gray-300 rounded-md px-3 py-2 mb-2 w-full text-black"
-          />
-          <input
-            type="text"
-            value={user.join_date}
-            onChange={(e) => setUser({ ...user, join_date: e.target.value })}
-            placeholder="Join Date"
-            className="border border-gray-300 rounded-md px-3 py-2 mb-2 w-full text-black"
-          />
-          <input
-            type="text"
-            value={user.profile_picture}
-            onChange={(e) => setUser({ ...user, profile_picture: e.target.value })}
-            placeholder="Profile Picture"
-            className="border border-gray-300 rounded-md px-3 py-2 mb-2 w-full text-black"
-          />
-          <textarea
-            value={user.bio}
-            onChange={(e) => setUser({ ...user, bio: e.target.value })}
-            placeholder="Bio"
-            className="border border-gray-300 rounded-md px-3 py-2 mb-2 w-full text-black"
-          />
-          <button
-            onClick={handleAddUser}
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full mr-2"
-          >
-            Add User
-          </button>
-        </div>
+        {onAddUser && (
+          <div>
+            <h2 className="text-center text-5xl mb-4 font-reenie">Add User</h2>
+            <input
+              type="text"
+              value={user.username}
+              name="username"
+              onChange={handleInputChange}
+              placeholder="Username"
+              className="border border-gray-300 text-center rounded-md px-3 py-2 mb-2 w-full font-serif text-black"
+            />
+            <input
+              type="email"
+              value={user.email}
+              name="email"
+              onChange={handleEmailChange}
+              placeholder="Email"
+              className="border border-gray-300 rounded-md px-3 py-2 mb-2 w-full text-black"
+            />
+            {emailError && <p className="text-red-500">{emailError}</p>}
+            <input
+              type="text"
+              value={user.join_date}
+              name="join_date"
+              onChange={handleInputChange}
+              placeholder="Join Date"
+              className="border border-gray-300 text-center rounded-md px-3 py-2 mb-2 w-full font-serif text-black"
+            />
+            <textarea
+              value={user.bio}
+              name="bio"
+              onChange={(e) => setUser({ ...user, bio: e.target.value })}
+              placeholder="Bio"
+              className="border border-gray-300 text-center rounded-md px-3 py-2 mb-2 w-full font-serif text-black"
+            />
+            <button
+              onClick={handleAddUser}
+              disabled={!isFormValid}
+              className={`bg-green-700 ${
+                !isFormValid ? 'opacity-50 cursor-not-allowed' : 'hover:bg-green-500'
+              } text-white text-center font-serif font-bold py-2 px-4 rounded-full mr-2 transition duration-300`}
+            >
+              Add User
+            </button>
+          </div>
+        )}
+        {onAddBook && (
+             <div>
+             <h2 className="text-center text-5xl mb-4 font-reenie">Add Book</h2>
+             <input
+               type="text"
+               value={book.bookName}
+               name="title"
+               onChange={handleInputChange}
+               placeholder="Title"
+               className="border border-gray-300 text-center rounded-md px-3 py-2 mb-2 w-full font-serif text-black"
+             />
+             <input
+               type="text"
+               value={book.authorName}
+               name="author"
+               onChange={handleInputChange}
+               placeholder="Author"
+               className="border border-gray-300 text-center rounded-md px-3 py-2 mb-2 w-full font-serif text-black"
+             />
+             <input
+               value={book.genreName}
+               name="genre"
+               onChange={handleInputChange}
+               placeholder="Genre"
+               className="border border-gray-300 text-center rounded-md px-3 py-2 mb-2 w-full font-serif text-black"
+             />
+              <input
+               value={book.synopsis}
+               name="synopsis"
+               onChange={handleInputChange}
+               placeholder="Synopsis"
+               className="border border-gray-300 text-center rounded-md px-3 py-2 mb-2 w-full font-serif text-black"
+             />
+            Add Book
+           </div>
+        )}
+        {onAddGenre && (
+          <div>
+            <h2 className="text-4xl mb-4 text-center font-reenie ">Genre!</h2>
+            <input
+              type="text"
+              value={genreName}
+              onChange={(e) => setGenreName(e.target.value)}
+              placeholder="Genre Name"
+              className="border border-gray-300 rounded-md px-3 py-2 mb-2 -mt-1 w-full font-serif text-center text-black"
+            /> 
+            <button
+              onClick={handleAddGenre}
+              className="bg-green-700 hover:bg-green-500 text-white font-bold text-sm py-1 px-2 font-reenie rounded-full mx-auto block transition duration-300"
+            >
+              add
+            </button>
+          </div>
+        )}
+        {onAddAuthor && (
+          <div>
+            <h2 className="text-4xl mb-4 text-center font-reenie ">Author!</h2>
+            <input
+              type="text"
+              value={authorName}
+              onChange={(e) => setAuthorName(e.target.value)}
+              placeholder="Author Name"
+              className="border border-gray-300 rounded-md px-3 py-2 mb-2 -mt-1 w-full font-serif text-center text-black"
+            />
+            <button
+              onClick={handleAddAuthor}
+              className="bg-green-700 hover:bg-green-500 text-white font-bold text-sm py-1 px-2 font-reenie rounded-full mx-auto block transition duration-300"
+            >
+              add
+            </button>
+
+          </div>
+        )}
       </div>
     </div>
-  );
+  );  
 };
 
 export default Popup;

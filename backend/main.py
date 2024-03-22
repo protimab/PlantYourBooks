@@ -6,6 +6,8 @@ app = Flask(__name__)
 CORS(app)
 DB_FILE = 'backend/database.db'
 
+#CREATES
+
 def create_tables():
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
@@ -16,7 +18,6 @@ def create_tables():
                     username TEXT,
                     email TEXT, 
                     join_date DATE, 
-                    profile_picture TEXT, 
                     bio TEXT
                 )''')
     
@@ -24,7 +25,6 @@ def create_tables():
     c.execute(''' CREATE TABLE IF NOT EXISTS books (
                     bookID INTEGER PRIMARY KEY,
                     authorID INTEGER,
-                    publication_date DATE,
                     genreID INTEGER,
                     synopsis TEXT,
                     FOREIGN KEY (authorID) REFERENCES authors (authorID), 
@@ -67,6 +67,9 @@ def create_tables():
     
     conn.commit()
     conn.close()
+
+
+#ADDS
 
 @app.route('/api/users', methods=['GET'])
 def get_users():
@@ -123,24 +126,126 @@ def get_authors():
     return jsonify(authors)
 
 @app.route('/api/users', methods=["POST"])
-def post_added_courses():
+def post_added_users():
     try:
         data = request.json
         print(data)
         username = data.get('username')
         email = data.get('email')
         join_date = data.get('join_date')
-        profile_picture = data.get('profile_picture')
         bio = data.get('bio')
+
+        if '@' not in email:
+            return jsonify({"error": "Invalid email format"}), 400
+
         conn = sqlite3.connect(DB_FILE)
         c = conn.cursor()
 
-        c.execute("INSERT INTO users (username, email, join_date, profile_picture, bio) VALUES (?, ?, ?, ?, ?)",
-                  (username, email, join_date, profile_picture, bio))
+        c.execute("INSERT INTO users (username, email, join_date, bio) VALUES (?, ?, ?, ?)",
+                  (username, email, join_date, bio))
         conn.commit()
         conn.close()
 
-        return jsonify({"message": "Course added successfully"}), 200
+        return jsonify({"message": "User added successfully"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
+@app.route('/api/books', methods=["POST"])
+def post_added_books():
+    try:
+        data = request.json
+        print(data)
+        book = data.get('title')
+        author = data.get('author_name')
+        genre = data.get('genre_name')
+        synopsis = data.get('synopsis')
+
+        conn = sqlite3.connect(DB_FILE)
+        c = conn.cursor()
+
+        c.execute("INSERT INTO users (book, author, genre, synopsis) VALUES (?, ?, ?, ?)",
+                  (book, author, genre, synopsis))
+        conn.commit()
+        conn.close()
+
+        return jsonify({"message": "Book added successfully"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+    
+@app.route('/api/genres', methods=["POST"])
+def post_added_genres():
+    try:
+        data = request.json
+        print(data)
+        genre_name = data.get('genre_name')
+        conn = sqlite3.connect(DB_FILE)
+        c = conn.cursor()
+
+        c.execute("INSERT INTO genres (genre_name) VALUES (?)",
+                  (genre_name,))
+        conn.commit()
+        conn.close()
+
+        return jsonify({"message": "Genre added successfully"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/authors', methods=["POST"])
+def post_added_authors():
+    try:
+        data = request.json
+        print(data)
+        author_name = data.get('author_name')
+        conn = sqlite3.connect(DB_FILE)
+        c = conn.cursor()
+
+        c.execute("INSERT INTO authors (author_name) VALUES (?)",
+                  (author_name,))
+        conn.commit()
+        conn.close()
+
+        return jsonify({"message": "Author added successfully"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
+
+# DELETES 
+    
+@app.route('/api/users/<int:user_id>', methods=['DELETE'])
+def delete_user(user_id):
+    try:
+        conn = sqlite3.connect(DB_FILE)
+        c = conn.cursor()
+        c.execute("DELETE FROM users WHERE userID = ?", (user_id,))
+        conn.commit()
+        conn.close()
+        return jsonify({"message": "User deleted successfully"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
+@app.route('/api/genres/<int:genre_id>', methods=['DELETE'])
+def delete_genre(genre_id):
+    try:
+        conn = sqlite3.connect(DB_FILE)
+        c = conn.cursor()
+        c.execute("DELETE FROM genres WHERE genreID = ?", (genre_id,))
+        conn.commit()
+        conn.close()
+        return jsonify({"message": "Genre deleted successfully"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
+@app.route('/api/authors/<int:author_id>', methods=['DELETE'])
+def delete_author(author_id):
+    try:
+        conn = sqlite3.connect(DB_FILE)
+        c = conn.cursor()
+        c.execute("DELETE FROM authors WHERE authorID = ?", (author_id,))
+        conn.commit()
+        conn.close()
+        return jsonify({"message": "Author deleted successfully"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
