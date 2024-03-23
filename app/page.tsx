@@ -13,7 +13,7 @@ interface Users {
 }
 
 interface Books {
-  bookID: number,
+  bookID: number;
   bookName: string;
   authorName: string;
   genreName: string;
@@ -22,8 +22,8 @@ interface Books {
 
 interface Reviews {
   reviewID: number;
-  userID: number;
-  bookID: number;
+  userName: string;
+  bookName: string;
   rating: string;
   review: string;
   review_date: string; 
@@ -56,11 +56,12 @@ export default function Home() {
   const [isBookPopupOpen, setBookPopupOpen] = useState(false);
   const [isGenrePopupOpen, setGenrePopupOpen] = useState(false);
   const [isAuthorPopupOpen, setAuthorPopupOpen] = useState(false);
+  const [isReviewPopupOpen, setReviewPopupOpen] = useState(false);
 
   useEffect(() => {
     fetchUsers();
     fetchBooks();
-    //fetchReviews();
+    fetchReviews();
     //fetchUserLibrary();
     fetchGenres();
     fetchAuthors();
@@ -72,11 +73,12 @@ export default function Home() {
   const mappedUsers: Users[] = resp.data.map((usersData: any) => ({
     userID: usersData[0],
     username: usersData[1],
-   email: usersData[2],
+    email: usersData[2],
     join_date: usersData[3],
     bio: usersData[4],
   }));
   setUsers(mappedUsers);
+  console.log(resp);
   } catch (error) {
     console.error('Error fetching users:', error);
   }
@@ -101,6 +103,7 @@ const fetchBooks = async () => {
       genreName: booksData[3],
       synopsis: booksData[4],
     }));
+    console.log(mappedBooks);
     setBooks(mappedBooks);
   } catch (error) {
     console.error('Error fetching books:', error);
@@ -115,14 +118,14 @@ const fetchBooks = async () => {
     setBookPopupOpen(false);
   };
 
-/*
+
   const fetchReviews = async () => {
     try {
       const resp = await axios.get<Reviews[]>('http://localhost:5001/api/reviews');
       const mappedReviews: Reviews[] = resp.data.map((reviewsData: any) => ({
         reviewID: reviewsData[0],
-        bookID: reviewsData[1], 
-        userID: reviewsData[2],
+        bookName: reviewsData[1], 
+        userName: reviewsData[2],
         rating: reviewsData[3],
         review: reviewsData[4],
         review_date: reviewsData[5],
@@ -132,7 +135,15 @@ const fetchBooks = async () => {
       console.error('Error fetching reviews:', error);
     }
   };
- */
+
+  const handleOpenReviewPopup = () => {
+    setReviewPopupOpen(true);
+  };
+  
+  const handleCloseReviewPopup = () => {
+    setReviewPopupOpen(false);
+  };
+ 
 
 /*
   const fetchUserLibrary = async () => {
@@ -256,13 +267,60 @@ const handleDeleteAuthor = async (authorID: number) => {
   }
 };
 
+const handleAddReview = async (reviewData: Reviews) => {
+  try {
+    await axios.post('http://localhost:5001/api/reviews', reviewData);
+    handleCloseUserPopup();
+  } catch (error) {
+    console.error('Error adding review:', error);
+  }
+};
+
+const handleDeleteReview = async (reviewID: number) => {
+  try {
+    await axios.delete(`http://localhost:5001/api/reviews/${reviewID}`);
+    fetchReviews(); 
+  } catch (error) {
+    console.error('Error deleting review:', error);
+  }
+};
+
 return (
   <div className="flex flex-col items-center min-h-screen">
     <h1 className="text-center text-5xl pt-30 font-reenie">PlantYourBooks</h1>
-    <button onClick={handleOpenUserPopup}>Add User</button>
-    <button onClick={handleOpenGenrePopup}>Add Genre</button> 
-    <button onClick={handleOpenAuthorPopup}>Add Author</button> 
-    <button onClick={handleOpenBookPopup}>Add Book</button> 
+    <div className='space-x-5'>
+    <button
+      onClick={handleOpenUserPopup}
+      className="mt-4 py-2 px-4 border border-gray-400 rounded-md bg-white text-gray-800 hover:bg-gray-100 transition duration-300"
+    >
+      Add User
+    </button>
+    <button
+      onClick={handleOpenGenrePopup}
+      className="mt-4 py-2 px-4 border border-gray-400 rounded-md bg-white text-gray-800 hover:bg-gray-100 transition duration-300"
+    >
+      Add Genre
+    </button>
+    <button
+      onClick={handleOpenAuthorPopup}
+      className="mt-4 py-2 px-4 border border-gray-400 rounded-md bg-white text-gray-800 hover:bg-gray-100 transition duration-300"
+    >
+      Add Author
+    </button>
+    <button
+      onClick={handleOpenBookPopup}
+      className="mt-4 py-2 px-4 border border-gray-400 rounded-md bg-white text-gray-800 hover:bg-gray-100 transition duration-300"
+    >
+      Add Book
+    </button>
+    <button
+      onClick={handleOpenReviewPopup}
+      className="mt-4 py-2 px-4 border border-gray-400 rounded-md bg-white text-gray-800 hover:bg-gray-100 transition duration-300"
+    >
+      Add Review
+    </button>
+    </div>
+    
     {isUserPopupOpen && (
         <Popup
           onClose={handleCloseUserPopup}
@@ -287,6 +345,12 @@ return (
           onAddBook={handleAddBook}
         />
       )}
+      {isReviewPopupOpen && (
+        <Popup
+          onClose={handleCloseReviewPopup}
+          onAddReview={handleAddReview}
+        />
+      )}
     <div className="text-center">
       <h1>Users</h1>
       <ul>
@@ -295,7 +359,7 @@ return (
             {user.username} - {user.email} - {user.join_date} - {user.bio}
             <button
                   onClick={() => handleDeleteUser(user.userID)}
-                  className="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded-full transition duration-300"
+                  className="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 ml-5 rounded-full transition duration-300"
                 >
                   x
                 </button>
@@ -307,8 +371,8 @@ return (
         <h1>Books</h1>
         <ul>
           {books.map(book => (
-              <li key={book.bookName}>
-              {book.authorName} - {book.genreName} - {book.synopsis} 
+              <li key={book.bookID}>
+              {book.bookName} - {book.authorName} - {book.genreName} - {book.synopsis} 
               <button
                 onClick={() => handleDeleteGenre(book.bookID)}
                 className="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 ml-2 rounded-full transition duration-300"
@@ -340,9 +404,25 @@ return (
         <ul>
           {authors.map(author => (
             <li key={author.authorID}>
-              {author.author_name}
+            {author.author_name}
+            <button
+                onClick={() => handleDeleteAuthor(author.authorID)}
+                className="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded-full transition duration-300"
+              >
+                x
+                </button>
+            </li>
+          ))}
+        </ul>
+      </div>
+      <div className="text-center">
+        <h1>Reviews</h1>
+        <ul>
+          {reviews.map(review => (
+            <li key={review.reviewID}>
+              {review.bookName} - {review.userName} - {review.rating} - {review.review} - {review.review_date}
               <button
-                  onClick={() => handleDeleteAuthor(author.authorID)}
+                  onClick={() => handleDeleteReview(review.reviewID)}
                   className="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded-full transition duration-300"
                 >
                   x

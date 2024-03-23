@@ -23,7 +23,8 @@ def create_tables():
     
     # create books table
     c.execute(''' CREATE TABLE IF NOT EXISTS books (
-                    bookID INTEGER PRIMARY KEY,
+                    bookID INTEGER PRIMARY KEY AUTOINCREMENT,
+                    book_name TEXT,
                     authorID INTEGER,
                     genreID INTEGER,
                     synopsis TEXT,
@@ -84,7 +85,7 @@ def get_users():
 def get_books():
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
-    c.execute('SELECT * FROM books')
+    c.execute('SELECT B.bookID, B.book_name, A.author_name, G.genre_name, B.synopsis FROM books B JOIN authors A ON A.authorID = B.authorID JOIN genres G ON g.genreID = b.genreID')
     books = c.fetchall()
     conn.close()
     return jsonify(books)
@@ -154,16 +155,16 @@ def post_added_users():
 def post_added_books():
     try:
         data = request.json
-        print(data)
-        book = data.get('title')
-        author = data.get('author_name')
-        genre = data.get('genre_name')
+        book = data.get('bookName')
+        author = data.get('authorName')
+        genre = data.get('genreName')
         synopsis = data.get('synopsis')
 
         conn = sqlite3.connect(DB_FILE)
         c = conn.cursor()
 
-        c.execute("INSERT INTO users (book, author, genre, synopsis) VALUES (?, ?, ?, ?)",
+        c.execute('''INSERT INTO books (book_name, authorID, genreID, synopsis)
+                        VALUES (?, (SELECT min(authorID) FROM authors WHERE author_name = ?), (SELECT min(genreID) FROM genres WHERE genre_name = ?), ?)''',
                   (book, author, genre, synopsis))
         conn.commit()
         conn.close()
