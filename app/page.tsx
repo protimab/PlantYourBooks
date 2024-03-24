@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Popup from './popup';
-import EditUserPopup from './edituserpopup';
 
 interface Users {
   userID: number;
@@ -43,8 +42,6 @@ interface Authors {
 
 export default function Home() {
   const [users, setUsers] = useState<Users[]>([]);
-  const [editedUser, setEditedUser] = useState<Users | null>(null);
-  const [isEditUserPopupOpen, setEditUserPopupOpen] = useState(false);
   const [books, setBooks] = useState<Books[]>([]);
   const [reviews, setReviews] = useState<Reviews[]>([]);
   const [genres, setGenres] = useState<Genres[]>([]);
@@ -87,17 +84,6 @@ export default function Home() {
 const handleCloseUserPopup = () => {
   setUserPopupOpen(false);
 };
-
-const handleOpenEditUserPopup = (user: Users) => {
-  setEditedUser(user);
-  setEditUserPopupOpen(true);
-};
-
-const handleCloseEditUserPopup = () => {
-  setEditedUser(null);
-  setEditUserPopupOpen(false);
-};
-
 
 const fetchBooks = async () => {
   try {
