@@ -44,16 +44,6 @@ def create_tables():
                     FOREIGN KEY (bookID) REFERENCES books (bookID)
               )''')
     
-    # create user library table
-    c.execute(''' CREATE TABLE IF NOT EXISTS user_library (
-                   userID INTEGER,
-                   bookID INTEGER,
-                   has_read TEXT,
-                   PRIMARY KEY (userID, bookID),
-                   FOREIGN KEY (userID) REFERENCES users (userID), 
-                   FOREIGN KEY (bookID) REFERENCES books (bookID)
-              )''')
-    
     # create genres table
     c.execute(''' CREATE TABLE IF NOT EXISTS genres (
                    genreID INTEGER PRIMARY KEY, 
@@ -94,19 +84,10 @@ def get_books():
 def get_reviews():
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
-    c.execute('SELECT * FROM reviews')
+    c.execute('SELECT R.reviewID, U.username, B.book_name, R.rating, R.review, R.review_date FROM reviews R JOIN users U ON U.userID = R.userID JOIN books B ON B.bookID = R.reviewID')
     reviews = c.fetchall()
     conn.close()
     return jsonify(reviews)
-
-@app.route('/api/user_library', methods=['GET'])
-def get_user_library():
-    conn = sqlite3.connect(DB_FILE)
-    c = conn.cursor()
-    c.execute('SELECT * FROM user_library')
-    user_library = c.fetchall()
-    conn.close()
-    return jsonify(user_library)
 
 @app.route('/api/genres', methods=['GET'])
 def get_genres():
@@ -172,6 +153,31 @@ def post_added_books():
         return jsonify({"message": "Book added successfully"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    
+@app.route('/api/reviews', methods=["POST"])
+def post_added_reviews():
+    try:
+        data = request.json
+        print(data)
+        user = data.get('userName')
+        book = data.get('bookName')
+        rating = data.get('rating')
+        review = data.get('review')
+        review_date = data.get('review_date')
+
+        conn = sqlite3.connect(DB_FILE)
+        c = conn.cursor()
+
+        c.execute('''INSERT INTO reviews (userID, bookID, rating, review, review_date) 
+                        VALUES ((SELECT min(userID) FROM users WHERE username = ?), (SELECT min(bookID) FROM books WHERE book_name = ?), ?, ?, ?)''',
+                  (user, book, rating, review, review_date))
+        
+        conn.commit()
+        conn.close()
+
+        return jsonify({"message": "Genre added successfully"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
     
@@ -226,12 +232,43 @@ def delete_user(user_id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     
+@app.route('/api/books/<int:book_id>', methods=['DELETE'])
+def delete_book(book_id):
+    try:
+        conn = sqlite3.connect(DB_FILE)
+        c = conn.cursor()
+        c.execute("DELETE FROM books WHERE bookID = ?", (book_id,))
+        conn.commit()
+        conn.close()
+        return jsonify({"message": "Book deleted successfully"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
+    
+@app.route('/api/reviews/<int:review_id>', methods=['DELETE'])
+def delete_review(review_id):
+    try:
+        conn = sqlite3.connect(DB_FILE)
+        c = conn.cursor()
+        c.execute("DELETE FROM reviews WHERE reviewID = ?", (review_id,))
+        conn.commit()
+        conn.close()
+        return jsonify({"message": "Review deleted successfully"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
 @app.route('/api/genres/<int:genre_id>', methods=['DELETE'])
 def delete_genre(genre_id):
     try:
         conn = sqlite3.connect(DB_FILE)
         c = conn.cursor()
+        
+        # Update the books table to set the genreID of associated books to NULL
+        c.execute("UPDATE books SET genreID = NULL WHERE genreID = ?", (genre_id,))
+        
+        # Delete the genre
         c.execute("DELETE FROM genres WHERE genreID = ?", (genre_id,))
+        
         conn.commit()
         conn.close()
         return jsonify({"message": "Genre deleted successfully"}), 200
@@ -243,7 +280,13 @@ def delete_author(author_id):
     try:
         conn = sqlite3.connect(DB_FILE)
         c = conn.cursor()
+        
+        # Update the books table to set the authorID of associated books to NULL
+        c.execute("UPDATE books SET authorID = NULL WHERE authorID = ?", (author_id,))
+        
+        # Delete the author
         c.execute("DELETE FROM authors WHERE authorID = ?", (author_id,))
+        
         conn.commit()
         conn.close()
         return jsonify({"message": "Author deleted successfully"}), 200

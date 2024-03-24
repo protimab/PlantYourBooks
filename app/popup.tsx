@@ -74,15 +74,29 @@ const Popup: React.FC<PopupProps> = ({ onClose, onAddUser, onAddBook, onAddGenre
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    if (name === 'bio') {
-      setUser({ ...user, [name]: value });
-    } else if (name === 'bookName' || name === 'authorName' || name === 'genreName' || name === 'synopsis') {
-      setBook({ ...book, [name]: value });
-    } else {
-      setReview({ ...review, [name]: value });
+  
+    // Update the state of the user object based on the input name
+    setUser({ ...user, [name]: value });
+  
+    // Update the state of the book object based on the input name
+    setBook({ ...book, [name]: value });
+  
+    // Update the state of the review object based on the input name
+    setReview({ ...review, [name]: value });
+  
+    // Update the state of the genreName and authorName fields directly
+    if (name === 'genreName') {
+      setGenreName(value);
     }
+  
+    if (name === 'authorName') {
+      setAuthorName(value);
+    }
+  
     validateForm();
   };
+  
+  
 
   const validateForm = () => {
     // check if all required fields are filled out
@@ -290,18 +304,18 @@ const Popup: React.FC<PopupProps> = ({ onClose, onAddUser, onAddBook, onAddGenre
         <h2 className="text-center text-5xl mb-4 font-reenie">Add Review</h2>
         <input
           type="text"
-          value={review.bookName}
-          name="bookName"
-          onChange={handleInputChange}
-          placeholder="Title"
-          className="border border-gray-300 text-center rounded-md px-3 py-2 mb-2 w-full font-serif text-black"
-        />
-        <input
-          type="text"
           value={review.userName}
           name="userName"
           onChange={handleInputChange}
           placeholder="username"
+          className="border border-gray-300 text-center rounded-md px-3 py-2 mb-2 w-full font-serif text-black"
+        />
+        <input
+          type="text"
+          value={review.bookName}
+          name="bookName"
+          onChange={handleInputChange}
+          placeholder="book title"
           className="border border-gray-300 text-center rounded-md px-3 py-2 mb-2 w-full font-serif text-black"
         />
         <input

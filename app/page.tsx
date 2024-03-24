@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Popup from './popup';
+import EditUserPopup from './edituserpopup';
 
 interface Users {
   userID: number;
@@ -29,11 +30,6 @@ interface Reviews {
   review_date: string; 
 }
 
-interface UserLibrary {
-  userID: number;
-  bookID: number;
-  has_read: string;
-}
 
 interface Genres {
   genreID: number;
@@ -47,9 +43,10 @@ interface Authors {
 
 export default function Home() {
   const [users, setUsers] = useState<Users[]>([]);
+  const [editedUser, setEditedUser] = useState<Users | null>(null);
+  const [isEditUserPopupOpen, setEditUserPopupOpen] = useState(false);
   const [books, setBooks] = useState<Books[]>([]);
   const [reviews, setReviews] = useState<Reviews[]>([]);
-  const [userLibrary, setUserLibrary] = useState<UserLibrary[]>([]);
   const [genres, setGenres] = useState<Genres[]>([]);
   const [authors, setAuthors] = useState<Authors[]>([]);
   const [isUserPopupOpen, setUserPopupOpen] = useState(false);
@@ -62,7 +59,6 @@ export default function Home() {
     fetchUsers();
     fetchBooks();
     fetchReviews();
-    //fetchUserLibrary();
     fetchGenres();
     fetchAuthors();
   }, []);
@@ -90,6 +86,16 @@ export default function Home() {
 
 const handleCloseUserPopup = () => {
   setUserPopupOpen(false);
+};
+
+const handleOpenEditUserPopup = (user: Users) => {
+  setEditedUser(user);
+  setEditUserPopupOpen(true);
+};
+
+const handleCloseEditUserPopup = () => {
+  setEditedUser(null);
+  setEditUserPopupOpen(false);
 };
 
 
@@ -144,23 +150,6 @@ const fetchBooks = async () => {
     setReviewPopupOpen(false);
   };
  
-
-/*
-  const fetchUserLibrary = async () => {
-    try {
-      const resp = await axios.get<UserLibrary[]>('http://localhost:5001/api/userlibrary');
-      const mappedUserLibrary: UserLibrary[] = resp.data.map((userLibraryData: any) => ({
-        userID: userLibraryData[0],
-        bookID: userLibraryData[1], 
-        has_read: userLibraryData[2],
-      }));
-      setUserLibrary(mappedUserLibrary);
-    } catch (error) {
-      console.error('Error fetching user library:', error);
-    }
-  };
-
- */
   const fetchGenres = async () => {
     try {
       const resp = await axios.get<Genres[]>('http://localhost:5001/api/genres');
@@ -231,6 +220,15 @@ const handleAddBook = async (bookData: Books) => {
   }
 };
 
+const handleDeleteBook = async (bookID: number) => {
+  try {
+    await axios.delete(`http://localhost:5001/api/books/${bookID}`);
+    fetchBooks();
+  } catch (error) {
+    console.error('Error deleting book:', error);
+  }
+};
+
 const handleAddGenre = async (genreName: string) => {
   try {
     await axios.post('http://localhost:5001/api/genres', { genre_name: genreName });
@@ -270,7 +268,7 @@ const handleDeleteAuthor = async (authorID: number) => {
 const handleAddReview = async (reviewData: Reviews) => {
   try {
     await axios.post('http://localhost:5001/api/reviews', reviewData);
-    handleCloseUserPopup();
+    handleCloseReviewPopup();
   } catch (error) {
     console.error('Error adding review:', error);
   }
@@ -374,7 +372,7 @@ return (
               <li key={book.bookID}>
               {book.bookName} - {book.authorName} - {book.genreName} - {book.synopsis} 
               <button
-                onClick={() => handleDeleteGenre(book.bookID)}
+                onClick={() => handleDeleteBook(book.bookID)}
                 className="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 ml-2 rounded-full transition duration-300"
               >
                 x
