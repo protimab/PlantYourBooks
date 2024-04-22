@@ -3,6 +3,9 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Popup from './popup';
+import EditUserPopup from "./edituserpopup";
+import filterByBooks from './filterBooks';
+import FilterPopUp from './filterBooks';
 
 interface Users {
   userID: number;
@@ -18,13 +21,15 @@ interface Books {
   authorName: string;
   genreName: string;
   synopsis: string;
+  avg_rating: number;
+  num_rating: number;
 }
 
 interface Reviews {
   reviewID: number;
   userName: string;
   bookName: string;
-  rating: string;
+  rating: number;
   review: string;
   review_date: string; 
 }
@@ -51,6 +56,10 @@ export default function Home() {
   const [isGenrePopupOpen, setGenrePopupOpen] = useState(false);
   const [isAuthorPopupOpen, setAuthorPopupOpen] = useState(false);
   const [isReviewPopupOpen, setReviewPopupOpen] = useState(false);
+  const [currentUser, setCurrentUser] = useState<Users | null>(null);
+  const [isUserEditPopupOpen, setIsUserEditPopupOpen] = useState(false);
+  const [isFilterPopupOpen, setIsFilterPopupOpen] = useState(false);
+  const [showMessage, setshowMessage] = useState(false);
 
   useEffect(() => {
     fetchUsers();
@@ -60,6 +69,8 @@ export default function Home() {
     fetchAuthors();
   }, []);
 
+
+  // USERS
   const fetchUsers = async () => {
   try {
   const resp = await axios.get<Users[]>('http://localhost:5001/api/users');
@@ -71,7 +82,6 @@ export default function Home() {
     bio: usersData[4],
   }));
   setUsers(mappedUsers);
-  console.log(resp);
   } catch (error) {
     console.error('Error fetching users:', error);
   }
@@ -85,6 +95,22 @@ const handleCloseUserPopup = () => {
   setUserPopupOpen(false);
 };
 
+const handleEditClick = (user: Users) => {
+  setCurrentUser(user);
+  setIsUserEditPopupOpen(true);
+};
+
+const handleEditUser = async (editedUser: Users) => {
+  try {
+    const response = await axios.put(`http://localhost:5001/api/users`, editedUser);
+    fetchUsers(); 
+    setIsUserEditPopupOpen(false);
+  } catch (error) {
+    console.error('Error editing user:', error);
+  }
+};
+
+//BOOKS 
 const fetchBooks = async () => {
   try {
     const resp = await axios.get<Books[]>('http://localhost:5001/api/books');
@@ -94,8 +120,9 @@ const fetchBooks = async () => {
       authorName: booksData[2], 
       genreName: booksData[3],
       synopsis: booksData[4],
+      avg_rating: booksData[5],
+      num_rating: booksData[6]
     }));
-    console.log(mappedBooks);
     setBooks(mappedBooks);
   } catch (error) {
     console.error('Error fetching books:', error);
@@ -110,14 +137,53 @@ const fetchBooks = async () => {
     setBookPopupOpen(false);
   };
 
+  const handleFilterClick = () => {
+    setIsFilterPopupOpen(true);
+  };
 
+  const handleCloseFilterPopup = () => {
+    setIsFilterPopupOpen(false);
+  };
+
+  const handleResetFilters = async () => {
+    try {
+      await fetchBooks();
+      setshowMessage(false);
+    } catch (error) {
+      console.error('Error fetching books:', error);
+    }
+  };
+
+  const handleApplyFilters = async (filters: any) => {
+    try {
+      const response = await axios.get('http://localhost:5000/api/books', {
+        params: filters
+      });
+      const mappedBooks = response.data.map((booksData:any) => ({
+        bookID: booksData[0],
+        bookName: booksData[1],
+        authorName: booksData[2], 
+        genreName: booksData[3],
+        synopsis: booksData[4],
+        avg_rating: booksData[5],
+        num_rating: booksData[6]
+      }));
+      setBooks(mappedBooks);
+      setshowMessage(true);
+    } catch (error) {
+      console.error('Error fetching filtered books:', error);
+    }
+  };
+
+  //REVIEWS 
   const fetchReviews = async () => {
     try {
       const resp = await axios.get<Reviews[]>('http://localhost:5001/api/reviews');
+      console.log(resp.data);
       const mappedReviews: Reviews[] = resp.data.map((reviewsData: any) => ({
         reviewID: reviewsData[0],
-        bookName: reviewsData[1], 
-        userName: reviewsData[2],
+        bookName: reviewsData[2], 
+        userName: reviewsData[1],
         rating: reviewsData[3],
         review: reviewsData[4],
         review_date: reviewsData[5],
@@ -136,6 +202,7 @@ const fetchBooks = async () => {
     setReviewPopupOpen(false);
   };
  
+  //GENRES
   const fetchGenres = async () => {
     try {
       const resp = await axios.get<Genres[]>('http://localhost:5001/api/genres');
@@ -157,7 +224,7 @@ const fetchBooks = async () => {
     setGenrePopupOpen(false);
   };
 
-
+  //AUTHORS
   const fetchAuthors = async () => {
     try {
       const resp = await axios.get<Authors[]>('http://localhost:5001/api/authors');
@@ -183,6 +250,7 @@ const handleAddUser = async (userData: Users) => {
   try {
     await axios.post('http://localhost:5001/api/users', userData);
     handleCloseUserPopup();
+    fetchUsers();
   } catch (error) {
     console.error('Error adding user:', error);
   }
@@ -201,6 +269,7 @@ const handleAddBook = async (bookData: Books) => {
   try {
     await axios.post('http://localhost:5001/api/books', bookData);
     handleCloseBookPopup();
+    fetchBooks();
   } catch (error) {
     console.error('Error adding book:', error);
   }
@@ -219,6 +288,7 @@ const handleAddGenre = async (genreName: string) => {
   try {
     await axios.post('http://localhost:5001/api/genres', { genre_name: genreName });
     handleCloseGenrePopup();
+    fetchGenres();
   } catch (error) {
     console.error('Error adding genre:', error);
   }
@@ -237,6 +307,7 @@ const handleAddAuthor = async (authorName: string) => {
   try {
     await axios.post('http://localhost:5001/api/authors', { author_name: authorName });
     handleCloseAuthorPopup();
+    fetchAuthors();
   } catch (error) {
     console.error('Error adding author:', error);
   }
@@ -255,6 +326,8 @@ const handleAddReview = async (reviewData: Reviews) => {
   try {
     await axios.post('http://localhost:5001/api/reviews', reviewData);
     handleCloseReviewPopup();
+    fetchReviews();
+    fetchBooks();
   } catch (error) {
     console.error('Error adding review:', error);
   }
@@ -264,14 +337,15 @@ const handleDeleteReview = async (reviewID: number) => {
   try {
     await axios.delete(`http://localhost:5001/api/reviews/${reviewID}`);
     fetchReviews(); 
+    fetchBooks();
   } catch (error) {
     console.error('Error deleting review:', error);
   }
 };
 
 return (
-  <div className="flex flex-col items-center min-h-screen">
-    <h1 className="text-center text-5xl pt-30 font-reenie">PlantYourBooks</h1>
+  <div className=" flex flex-col items-center min-h-screen">
+    <h1 className="text-center text-4xl pt-7 font-reenie">PlantYourBooks 🪴 </h1>
     <div className='space-x-5'>
     <button
       onClick={handleOpenUserPopup}
@@ -335,86 +409,234 @@ return (
           onAddReview={handleAddReview}
         />
       )}
-    <div className="text-center">
-      <h1>Users</h1>
-      <ul>
-        {users.map(user => (
-          <li key={user.userID}>
-            {user.username} - {user.email} - {user.join_date} - {user.bio}
-            <button
+      {isUserEditPopupOpen && currentUser && 
+        <EditUserPopup 
+          onClose={() => setIsUserEditPopupOpen(false)} 
+          onEditUser={handleEditUser} 
+          userToEdit={currentUser} 
+        />
+        }
+      {isFilterPopupOpen && 
+        <FilterPopUp onClose={handleCloseFilterPopup} onApplyFilters={handleApplyFilters} books={books} />
+      }
+  
+  <div className="container">
+  <h1 className="text-4xl mb-2 text-white font-reenie">Users</h1>
+  <ul className="list-none p-0">
+    <li className="py-2 border-b border-gray-300">
+      <div className="flex justify-between">
+        <div className="flex flex-col mr-4">
+          <span className="text-gray-100 mb-1 font-bold">Username</span>
+          {users.map(user => (
+            <span key={user.userID} className="text-gray-100 mb-1">{user.username}</span>
+          ))}
+        </div>
+        <div className="flex flex-col mr-4">
+          <span className="text-gray-100 mb-1 font-bold">Email</span>
+          {users.map(user => (
+            <span key={user.userID} className="text-gray-100 mb-1">{user.email}</span>
+          ))}
+        </div>
+        <div className="flex flex-col mr-4">
+          <span className="text-gray-100 mb-1 font-bold">Join Date</span>
+          {users.map(user => (
+            <span key={user.userID} className="text-gray-100 mb-1">{user.join_date}</span>
+          ))}
+        </div>
+        <div className="flex flex-col mr-4">
+          <span className="text-gray-100 mb-1 font-bold">Bio</span>
+          {users.map(user => (
+            <div key={user.userID} className="flex items-center justify-between">
+              <span className="text-gray-100 mb-1 mr-40">{user.bio}</span>
+              <div className="flex">
+                <button
+                  onClick={() => handleEditClick(user)}
+                  className="bg-green-500 hover:bg-green-700 text-white font-bold px-3 rounded-full mr-2"
+                >
+                  edit
+                </button>
+                <button
                   onClick={() => handleDeleteUser(user.userID)}
-                  className="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 ml-5 rounded-full transition duration-300"
+                  className="bg-red-500 hover:bg-red-700 text-white font-bold px-2 rounded-full"
                 >
                   x
                 </button>
-          </li>
-        ))}
-      </ul>
-    </div>
-    <div className="text-center">
-        <h1>Books</h1>
-        <ul>
-          {books.map(book => (
-              <li key={book.bookID}>
-              {book.bookName} - {book.authorName} - {book.genreName} - {book.synopsis} 
-              <button
-                onClick={() => handleDeleteBook(book.bookID)}
-                className="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 ml-2 rounded-full transition duration-300"
-              >
-                x
-              </button>
-            </li>
+              </div>
+            </div>
           ))}
-        </ul>
+        </div>
       </div>
-    <div className="text-center">
-        <h1>Genres</h1>
-        <ul>
+    </li>
+  </ul>
+</div>
+
+<div className="container">
+  <h1 className="text-4xl mb-2 text-white font-reenie">Genres</h1>
+  <ul className="list-none p-0">
+    <li className="py-2 border-b border-gray-300">
+      <div className="flex justify-between">
+        <div className="flex flex-col mr-4">
+          <span className="text-gray-200 mb-1 font-bold">Genre</span>
           {genres.map(genre => (
-            <li key={genre.genreID}>
-              {genre.genre_name}
-              <button
-                onClick={() => handleDeleteGenre(genre.genreID)}
-                className="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 ml-2 rounded-full transition duration-300"
-              >
-                x
-              </button>
-            </li>
+            <span key={genre.genreID} className="text-gray-200 mb-1">{genre.genre_name}</span>
           ))}
-        </ul>
+        </div>
+        <div className="flex flex-col mr-4">
+          {}
+        </div>
+        <div className="flex flex-col mr-4">
+          {}
+        </div>
+        <div className="flex flex-col mr-4">
+          {}
+        </div>
       </div>
-      <div className="text-center">
-        <h1>Authors</h1>
-        <ul>
+    </li>
+  </ul>
+</div>
+
+<div className="container">
+  <h1 className="text-4xl mb-2 text-white font-reenie">Authors</h1>
+  <ul className="list-none p-0">
+    <li className="py-2 border-b border-gray-300">
+      <div className="flex justify-between">
+        <div className="flex flex-col mr-4">
+          <span className="text-gray-200 mb-1 font-bold">Author</span>
           {authors.map(author => (
-            <li key={author.authorID}>
-            {author.author_name}
-            <button
-                onClick={() => handleDeleteAuthor(author.authorID)}
-                className="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded-full transition duration-300"
-              >
-                x
-                </button>
-            </li>
+            <span key={author.authorID} className="text-gray-200 mb-1">{author.author_name}</span>
           ))}
-        </ul>
+        </div>
+        <div className="flex flex-col mr-4">
+          {}
+        </div>
+        <div className="flex flex-col mr-4">
+          {}
+        </div>
+        <div className="flex flex-col mr-4">
+          {}
+        </div>
       </div>
-      <div className="text-center">
-        <h1>Reviews</h1>
-        <ul>
-          {reviews.map(review => (
-            <li key={review.reviewID}>
-              {review.bookName} - {review.userName} - {review.rating} - {review.review} - {review.review_date}
-              <button
-                  onClick={() => handleDeleteReview(review.reviewID)}
-                  className="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded-full transition duration-300"
+    </li>
+  </ul>
+</div>
+
+<div className="container">
+  <h1 className="text-4xl mb-2 text-white font-reenie">Books</h1>
+  <ul className="list-none p-0">
+    <li className="py-2 border-b border-gray-300">
+      <div className="flex justify-between">
+        <div className="flex flex-col mr-4">
+          <span className="text-gray-200 mb-1 font-bold">Title</span>
+          {books.map(book => (
+            <span key={book.bookID} className="text-gray-200 mb-1">{book.bookName}</span>
+          ))}
+        </div>
+        <div className="flex flex-col mr-4">
+          <span className="text-gray-200 mb-1 font-bold">Author</span>
+          {books.map(book => (
+            <span key={book.bookID} className="text-gray-200 mb-1">{book.authorName}</span>
+          ))}
+        </div>
+        <div className="flex flex-col mr-4">
+          <span className="text-gray-200 mb-1 font-bold">Genre</span>
+          {books.map(book => (
+            <span key={book.bookID} className="text-gray-200 mb-1">{book.genreName}</span>
+          ))}
+        </div>
+        <div className="flex flex-col mr-4">
+          <span className="text-gray-200 mb-1 font-bold">Average Rating</span>
+          {books.map(book => (
+            <span key={book.bookID} className="text-gray-200 mb-1">{book.avg_rating}</span>
+          ))}
+        </div>
+        <div className="flex flex-col mr-4">
+          <span className="text-gray-200 mb-1 font-bold"># of Reviews</span>
+          {books.map(book => (
+            <span key={book.bookID} className="text-gray-200 mb-1">{book.num_rating}</span>
+          ))}
+        </div>
+        <div className="flex flex-col mr-4">
+          <span className="text-gray-200 mb-1 font-bold">Synopsis</span>
+          {books.map(book => (
+            <div key={book.bookID} className="flex items-center justify-between">
+              <span className="text-gray-200 mb-1 mr-40">{book.synopsis}</span>
+              <div className="flex">
+                <button
+                  onClick={() => handleDeleteBook(book.bookID)}
+                  className="bg-red-500 hover:bg-red-700 text-white font-bold px-2 rounded-full"
                 >
                   x
                 </button>
-            </li>
+                <button onClick={handleFilterClick} className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-full mb-8 ml-6">
+                  Filter Books
+               </button>
+               <button onClick={handleResetFilters} className="bg-gray-900 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-full mb-8 ml-6">
+                  Reset Filters
+             </button>
+             {showMessage && <div className='mb-4'>
+            {books.length} entries matched your filter! <br/>
+        </div>}
+              </div>
+            </div>
           ))}
-        </ul>
+        </div>
       </div>
+    </li>
+  </ul>
+</div>
+
+<div className="container">
+  <h1 className="text-4xl mb-2 text-white font-reenie">Reviews</h1>
+  <ul className="list-none p-0">
+    <li className="py-2 border-b border-gray-300">
+      <div className="flex justify-between">
+        <div className="flex flex-col mr-4">
+          <span className="text-gray-200 mb-1 font-bold">User</span>
+          {reviews.map(review => (
+            <span key={review.reviewID} className="text-gray-200 mb-1">{review.userName}</span>
+          ))}
+        </div>
+        <div className="flex flex-col mr-4">
+          <span className="text-gray-200 mb-1 font-bold">Title</span>
+          {reviews.map(review => (
+            <span key={review.reviewID} className="text-gray-200 mb-1">{review.bookName}</span>
+          ))}
+        </div>
+        <div className="flex flex-col mr-4">
+          <span className="text-gray-200 mb-1 font-bold">Rating</span>
+          {reviews.map(review => (
+            <span key={review.reviewID} className="text-gray-200 mb-1">{review.rating}</span>
+          ))}
+        </div>
+        <div className="flex flex-col mr-4">
+          <span className="text-gray-200 mb-1 font-bold">Date</span>
+          {reviews.map(review => (
+            <span key={review.reviewID} className="text-gray-200 mb-1">{review.review_date}</span>
+          ))}
+        </div>
+        <div className="flex flex-col mr-4">
+          <span className="text-gray-200 mb-1 font-bold">Review</span>
+          {reviews.map(review => (
+            <div key={review.reviewID} className="flex items-center justify-between">
+              <span className="text-gray-200 mb-1 mr-40">{review.review}</span>
+              <div className="flex flex-col mr-4">
+          
+        </div>
+              <div className="flex">
+                <button
+                  onClick={() => handleDeleteReview(review.reviewID)}
+                  className="bg-red-500 hover:bg-red-700 text-white font-bold px-2 rounded-full"
+                >
+                  x
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </li>
+  </ul>
+</div>
       </div>
 );
 }

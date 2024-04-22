@@ -14,14 +14,9 @@ interface User {
   bio: string;
 }
 
-const Popup: React.FC<PopupProps> = ({ onClose, onEditUser, userToEdit }) => {
-  const [editedUser, setEditedUser] = useState<User>({
-    userID: userToEdit.userID,
-    username: userToEdit.username,
-    email: userToEdit.email,
-    join_date: userToEdit.join_date,
-    bio: userToEdit.bio,
-  });
+const EditUserPopup: React.FC<PopupProps> = ({ onClose, onEditUser, userToEdit }) => {
+  const [editedUser, setEditedUser] = useState<User>({ ...userToEdit });
+
 
   useEffect(() => {
     setEditedUser({
@@ -35,7 +30,10 @@ const Popup: React.FC<PopupProps> = ({ onClose, onEditUser, userToEdit }) => {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setEditedUser({ ...editedUser, [name]: value });
+    setEditedUser(prevState => ({
+      ...prevState,
+      [name]: value
+    }));
   };
 
   const handleEditUser = () => {
@@ -58,7 +56,7 @@ const Popup: React.FC<PopupProps> = ({ onClose, onEditUser, userToEdit }) => {
             name="username"
             value={editedUser.username}
             onChange={handleInputChange}
-            className="border border-gray-300 rounded-md px-3 py-2 mb-2 w-full"
+            className="border border-gray-300 rounded-md px-3 py-2 mb-2 w-full text-black"
           />
         </div>
         <div>
@@ -69,7 +67,7 @@ const Popup: React.FC<PopupProps> = ({ onClose, onEditUser, userToEdit }) => {
             name="email"
             value={editedUser.email}
             onChange={handleInputChange}
-            className="border border-gray-300 rounded-md px-3 py-2 mb-2 w-full"
+            className="border border-gray-300 rounded-md px-3 py-2 mb-2 w-full  text-black"
           />
         </div>
         <div>
@@ -80,7 +78,7 @@ const Popup: React.FC<PopupProps> = ({ onClose, onEditUser, userToEdit }) => {
             name="join_date"
             value={editedUser.join_date}
             onChange={handleInputChange}
-            className="border border-gray-300 rounded-md px-3 py-2 mb-2 w-full"
+            className="border border-gray-300 rounded-md px-3 py-2 mb-2 w-full  text-black"
           />
         </div>
         <div>
@@ -90,7 +88,7 @@ const Popup: React.FC<PopupProps> = ({ onClose, onEditUser, userToEdit }) => {
             name="bio"
             value={editedUser.bio}
             onChange={handleInputChange}
-            className="border border-gray-300 rounded-md px-3 py-2 mb-2 w-full"
+            className="border border-gray-300 rounded-md px-3 py-2 mb-2 w-full  text-black"
           />
         </div>
         <button onClick={handleEditUser} className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-full mt-4">
@@ -101,4 +99,4 @@ const Popup: React.FC<PopupProps> = ({ onClose, onEditUser, userToEdit }) => {
   );
 };
 
-export default Popup;
+export default EditUserPopup;

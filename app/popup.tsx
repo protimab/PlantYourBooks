@@ -24,13 +24,15 @@ interface Book {
   authorName: string;
   genreName: string;
   synopsis: string;
+  avg_rating: number;
+  num_rating: number;
 }
 
 interface Review {
   reviewID: number;
   userName: string;
   bookName: string;
-  rating: string;
+  rating: number;
   review: string;
   review_date: string;
 }
@@ -49,13 +51,15 @@ const Popup: React.FC<PopupProps> = ({ onClose, onAddUser, onAddBook, onAddGenre
     bookName: '',
     authorName: '',
     genreName: '',
-    synopsis: ''
+    synopsis: '',
+    avg_rating: 0,
+    num_rating: 0
   });
   const [review, setReview] = useState<Review>({
     reviewID: 0,
     userName: '',
     bookName: '',
-    rating: '',
+    rating: 5,
     review: '',
     review_date: ''
   });
@@ -75,16 +79,10 @@ const Popup: React.FC<PopupProps> = ({ onClose, onAddUser, onAddBook, onAddGenre
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
   
-    // Update the state of the user object based on the input name
     setUser({ ...user, [name]: value });
-  
-    // Update the state of the book object based on the input name
     setBook({ ...book, [name]: value });
-  
-    // Update the state of the review object based on the input name
     setReview({ ...review, [name]: value });
-  
-    // Update the state of the genreName and authorName fields directly
+
     if (name === 'genreName') {
       setGenreName(value);
     }
@@ -99,7 +97,6 @@ const Popup: React.FC<PopupProps> = ({ onClose, onAddUser, onAddBook, onAddGenre
   
 
   const validateForm = () => {
-    // check if all required fields are filled out
     if (user.username && user.email && user.join_date && user.bio) {
       setIsFormValid(true);
     } else {
@@ -322,7 +319,7 @@ const Popup: React.FC<PopupProps> = ({ onClose, onAddUser, onAddBook, onAddGenre
           value={review.rating}
           name="rating"
           onChange={handleInputChange}
-          placeholder="rating"
+          placeholder="rating (1-5)"
           className="border border-gray-300 text-center rounded-md px-3 py-2 mb-2 w-full font-serif text-black"
         />
         <textarea

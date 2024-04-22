@@ -34,10 +34,10 @@ def create_tables():
     
     # create reviews table
     c.execute(''' CREATE TABLE IF NOT EXISTS reviews (
-                    reviewID TEXT PRIMARY KEY,
+                    reviewID INTEGER PRIMARY KEY AUTOINCREMENT,
                     userID INTEGER,
                     bookID INTEGER,
-                    rating TEXT, 
+                    rating INTEGER, 
                     review TEXT, 
                     review_date DATE,
                     FOREIGN KEY (userID) REFERENCES users (userID), 
@@ -60,8 +60,6 @@ def create_tables():
     conn.close()
 
 
-#ADDS
-
 @app.route('/api/users', methods=['GET'])
 def get_users():
     conn = sqlite3.connect(DB_FILE)
@@ -75,7 +73,7 @@ def get_users():
 def get_books():
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
-    c.execute('SELECT B.bookID, B.book_name, A.author_name, G.genre_name, B.synopsis FROM books B JOIN authors A ON A.authorID = B.authorID JOIN genres G ON g.genreID = b.genreID')
+    c.execute('SELECT B.bookID, B.book_name, A.author_name, G.genre_name, B.synopsis, (SELECT AVG(rating) FROM reviews WHERE bookID=B.bookID) AS avg_rating, (SELECT COUNT(*) FROM reviews WHERE bookID=B.bookID) AS num_rating FROM books B JOIN authors A ON A.authorID = B.authorID JOIN genres G ON g.genreID = b.genreID')
     books = c.fetchall()
     conn.close()
     return jsonify(books)
@@ -84,7 +82,7 @@ def get_books():
 def get_reviews():
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
-    c.execute('SELECT R.reviewID, U.username, B.book_name, R.rating, R.review, R.review_date FROM reviews R JOIN users U ON U.userID = R.userID JOIN books B ON B.bookID = R.reviewID')
+    c.execute('SELECT R.reviewID, U.username, B.book_name, R.rating, R.review, R.review_date FROM reviews R JOIN users U ON U.userID = R.userID JOIN books B ON B.bookID = R.bookID')
     reviews = c.fetchall()
     conn.close()
     return jsonify(reviews)
@@ -106,6 +104,10 @@ def get_authors():
     authors = c.fetchall()
     conn.close()
     return jsonify(authors)
+
+
+
+#ADDS
 
 @app.route('/api/users', methods=["POST"])
 def post_added_users():
@@ -175,12 +177,10 @@ def post_added_reviews():
         conn.commit()
         conn.close()
 
-        return jsonify({"message": "Genre added successfully"}), 200
+        return jsonify({"message": "Review added successfully"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
-    
 @app.route('/api/genres', methods=["POST"])
 def post_added_genres():
     try:
@@ -290,6 +290,31 @@ def delete_author(author_id):
         conn.commit()
         conn.close()
         return jsonify({"message": "Author deleted successfully"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
+#EDITS
+    
+@app.route('/api/users/', methods=["PUT"])
+def edit_user():
+    try:
+        data = request.json
+        print(data)
+        userID = data.get('userID')
+        username = data.get('username')
+        email = data.get('email')
+        join_date = data.get('join_date')
+        bio = data.get('bio')
+        
+        conn = sqlite3.connect(DB_FILE)
+        c = conn.cursor()
+
+        c.execute("UPDATE users SET username=?, email=?, join_date=?, bio=? WHERE userID=?",
+                  (username, email, join_date, bio, userID))
+        conn.commit()
+        conn.close()
+
+        return jsonify({"message": "User updated successfully"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
