@@ -73,7 +73,39 @@ def get_users():
 def get_books():
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
-    c.execute('SELECT B.bookID, B.book_name, A.author_name, G.genre_name, B.synopsis, (SELECT AVG(rating) FROM reviews WHERE bookID=B.bookID) AS avg_rating, (SELECT COUNT(*) FROM reviews WHERE bookID=B.bookID) AS num_rating FROM books B JOIN authors A ON A.authorID = B.authorID JOIN genres G ON g.genreID = b.genreID')
+    print(request.args)
+    conditional = "WHERE"
+    args = tuple()
+
+    for q, v in request.args.items():
+        if (q == "bookName") and (len(v)!=0):
+            q = "book_name"
+            conditional += f" B.{q} = ? AND"
+            args += (v,)
+        elif (q == "avg_rating" or q == 'num_rating') and (len(v)!=0):
+            conditional+=f" {q} > ? AND"
+            args += (int(v), )
+        elif (q == "authorName") and (len(v)!=0):
+            q = "author_name"
+            conditional += f" A.{q} = ? AND"
+            args += (v,)
+        elif (len(v) != 0):
+            q = "genre_name"
+            conditional += f" G.{q} = ? AND"
+            args += (v,)
+    #print(conditional)
+    print(args)
+    if (conditional != "WHERE"):
+        conditional = conditional[:-3]
+    else:
+        conditional = ""
+    
+    query = f'''SELECT B.bookID, B.book_name, A.author_name, G.genre_name, B.synopsis,
+              (SELECT AVG(rating) FROM reviews WHERE bookID=B.bookID) AS avg_rating,
+              (SELECT COUNT(*) FROM reviews WHERE bookID=B.bookID) AS num_rating
+              FROM books B JOIN authors A ON A.authorID = B.authorID JOIN genres G ON g.genreID = b.genreID {conditional}'''
+    print(query)
+    c.execute(query, args)
     books = c.fetchall()
     conn.close()
     return jsonify(books)

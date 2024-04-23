@@ -8,15 +8,21 @@ interface Book {
     synopsis: string;
     avg_rating: number;
     num_rating: number;
-  }
+}
+
+interface Authors {
+  authorID: number;
+  author_name: string;
+}
 
 interface filterByBooks {
   onClose: () => void;
   onApplyFilters: (filters: any) => void; 
   books: Book[];
+  authors: Authors[];
 }
 
-const FilterPopUp: React.FC<filterByBooks> = ({ onClose, onApplyFilters, books }) => {
+const FilterPopUp: React.FC<filterByBooks> = ({ onClose, onApplyFilters, books, authors }) => {
     useEffect(() => {
         const handleEscapeKeyPress = (event: KeyboardEvent) => {
           if (event.key === 'Escape') {
@@ -35,7 +41,6 @@ const FilterPopUp: React.FC<filterByBooks> = ({ onClose, onApplyFilters, books }
     bookName: '',
     authorName: '',
     genreName:'',
-    synopsis: '',
     avg_rating: '',
     num_rating: ''
   });
@@ -74,8 +79,8 @@ const FilterPopUp: React.FC<filterByBooks> = ({ onClose, onApplyFilters, books }
           onChange={handleSelectChange} 
           className="border border-gray-300 text-center rounded-md px-3 py-2 mb-2 w-full font-serif text-black">
             <option value="" disabled>Select Author</option>
-            {books.map(book => (
-              <option key={book.bookID} value={book.authorName}>{book.authorName}</option>
+            {authors.map(author => (
+              <option key={author.authorID} value={author.author_name}>{author.author_name}</option>
             ))}
           </select>
         </div>

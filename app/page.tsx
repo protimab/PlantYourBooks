@@ -156,7 +156,7 @@ const fetchBooks = async () => {
 
   const handleApplyFilters = async (filters: any) => {
     try {
-      const response = await axios.get('http://localhost:5000/api/books', {
+      const response = await axios.get('http://localhost:5001/api/books', {
         params: filters
       });
       const mappedBooks = response.data.map((booksData:any) => ({
@@ -417,7 +417,7 @@ return (
         />
         }
       {isFilterPopupOpen && 
-        <FilterPopUp onClose={handleCloseFilterPopup} onApplyFilters={handleApplyFilters} books={books} />
+        <FilterPopUp onClose={handleCloseFilterPopup} onApplyFilters={handleApplyFilters} books={books} authors={authors} />
       }
   
   <div className="container">
@@ -521,7 +521,24 @@ return (
 </div>
 
 <div className="container">
-  <h1 className="text-4xl mb-2 text-white font-reenie">Books</h1>
+  <div>
+  <h1 className="text-4xl mb-2 text-white font-reenie inline">Books</h1>
+  <button onClick={handleFilterClick} className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-full mb-8 ml-6">
+      Filter Books
+    </button>
+    <button onClick={handleResetFilters} className="bg-gray-900 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-full mb-8 ml-6">
+      Reset Filters
+  </button>
+  </div>
+  {showMessage && <div className='mb-4 bold'>
+    {books.length === 1 ? (
+    <div className='mb-4 bold'>1 entry matched your filter!</div>
+  ) : (
+    <div className='mb-4 bold'>
+      {books.length} entries matched your filter! <br/>
+    </div>
+  )}
+  </div>}
   <ul className="list-none p-0">
     <li className="py-2 border-b border-gray-300">
       <div className="flex justify-between">
@@ -567,18 +584,10 @@ return (
                 >
                   x
                 </button>
-                <button onClick={handleFilterClick} className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-full mb-8 ml-6">
-                  Filter Books
-               </button>
-               <button onClick={handleResetFilters} className="bg-gray-900 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-full mb-8 ml-6">
-                  Reset Filters
-             </button>
-             {showMessage && <div className='mb-4'>
-            {books.length} entries matched your filter! <br/>
-        </div>}
               </div>
             </div>
           ))}
+
         </div>
       </div>
     </li>
