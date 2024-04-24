@@ -28,6 +28,17 @@ interface Book {
   num_rating: number;
 }
 
+interface Genres {
+  genreID: number;
+  genre_name: string;
+}
+
+interface Authors {
+  authorID: number;
+  author_name: string;
+}
+
+
 interface Review {
   reviewID: number;
   userName: string;

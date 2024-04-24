@@ -69,7 +69,6 @@ export default function Home() {
     fetchAuthors();
   }, []);
 
-
   // USERS
   const fetchUsers = async () => {
   try {
@@ -475,10 +474,41 @@ return (
   <ul className="list-none p-0">
     <li className="py-2 border-b border-gray-300">
       <div className="flex justify-between">
-        <div className="flex flex-col mr-4">
-          <span className="text-gray-200 mb-1 font-bold">Genre</span>
+        <div className="flex flex-col mr-2">
+          <span className="text-gray-200 mb-1 font-bold"></span>
           {genres.map(genre => (
-            <span key={genre.genreID} className="text-gray-200 mb-1">{genre.genre_name}</span>
+            <div key={genre.genreID} className="flex items-center">
+              <span className="text-gray-200 mb-1 mr-3">{genre.genre_name}</span>
+              <button
+                onClick={() => handleDeleteGenre(genre.genreID)}
+                className="bg-red-500 hover:bg-red-700 text-white font-bold px-2 rounded-full"
+              >
+                x
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+    </li>
+  </ul>
+</div>
+<div className="container">
+  <h1 className="text-4xl mb-2 text-white font-reenie">Authors</h1>
+  <ul className="list-none p-0">
+    <li className="py-2 border-b border-gray-300">
+      <div className="flex justify-between">
+        <div className="flex flex-col mr-2">
+          <span className="text-gray-200 mb-1 font-bold"></span>
+          {authors.map(author => (
+            <div key={author.authorID} className="flex items-center">
+              <span className="text-gray-200 mb-1 mr-9">{author.author_name}</span>
+              <button
+                onClick={() => handleDeleteAuthor(author.authorID)}
+                className="bg-red-500 hover:bg-red-700 text-white font-bold px-2 rounded-full"
+              >
+                x
+              </button>
+            </div>
           ))}
         </div>
         <div className="flex flex-col mr-4">
@@ -495,30 +525,6 @@ return (
   </ul>
 </div>
 
-<div className="container">
-  <h1 className="text-4xl mb-2 text-white font-reenie">Authors</h1>
-  <ul className="list-none p-0">
-    <li className="py-2 border-b border-gray-300">
-      <div className="flex justify-between">
-        <div className="flex flex-col mr-4">
-          <span className="text-gray-200 mb-1 font-bold">Author</span>
-          {authors.map(author => (
-            <span key={author.authorID} className="text-gray-200 mb-1">{author.author_name}</span>
-          ))}
-        </div>
-        <div className="flex flex-col mr-4">
-          {}
-        </div>
-        <div className="flex flex-col mr-4">
-          {}
-        </div>
-        <div className="flex flex-col mr-4">
-          {}
-        </div>
-      </div>
-    </li>
-  </ul>
-</div>
 
 <div className="container">
   <div>

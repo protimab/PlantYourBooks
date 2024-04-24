@@ -294,11 +294,9 @@ def delete_genre(genre_id):
     try:
         conn = sqlite3.connect(DB_FILE)
         c = conn.cursor()
-        
-        # Update the books table to set the genreID of associated books to NULL
+    
         c.execute("UPDATE books SET genreID = NULL WHERE genreID = ?", (genre_id,))
         
-        # Delete the genre
         c.execute("DELETE FROM genres WHERE genreID = ?", (genre_id,))
         
         conn.commit()
@@ -313,10 +311,8 @@ def delete_author(author_id):
         conn = sqlite3.connect(DB_FILE)
         c = conn.cursor()
         
-        # Update the books table to set the authorID of associated books to NULL
         c.execute("UPDATE books SET authorID = NULL WHERE authorID = ?", (author_id,))
         
-        # Delete the author
         c.execute("DELETE FROM authors WHERE authorID = ?", (author_id,))
         
         conn.commit()
