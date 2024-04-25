@@ -10,6 +10,12 @@ interface Book {
     num_rating: number;
 }
 
+interface Genres {
+  genreID: number;
+  genre_name: string;
+}
+
+
 interface Authors {
   authorID: number;
   author_name: string;
@@ -20,9 +26,10 @@ interface filterByBooks {
   onApplyFilters: (filters: any) => void; 
   books: Book[];
   authors: Authors[];
+  genres: Genres[];
 }
 
-const FilterPopUp: React.FC<filterByBooks> = ({ onClose, onApplyFilters, books, authors }) => {
+const FilterPopUp: React.FC<filterByBooks> = ({ onClose, onApplyFilters, books, authors, genres }) => {
     useEffect(() => {
         const handleEscapeKeyPress = (event: KeyboardEvent) => {
           if (event.key === 'Escape') {
@@ -40,7 +47,7 @@ const FilterPopUp: React.FC<filterByBooks> = ({ onClose, onApplyFilters, books, 
   const [filters, setFilters] = useState<any>({
     bookName: '',
     authorName: '',
-    genreName:'',
+    genres: [],
     avg_rating: '',
     num_rating: ''
   });
@@ -64,6 +71,16 @@ const FilterPopUp: React.FC<filterByBooks> = ({ onClose, onApplyFilters, books, 
       }
   };
 
+  
+  const handleCheckboxChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, checked } = event.target;
+    if (checked) {
+      setFilters({ ...filters, genres: [...filters.genres, name] });
+    } else {
+      setFilters({ ...filters, genres: filters.genres.filter((genre: string) => genre !== name) });
+    }
+  };  
+
   return (
     <div className="fixed top-0 left-0 w-full h-full bg-gray-800 bg-opacity-50 flex items-center justify-center">
       <div className="bg-emerald-600 p-6 rounded shadow-lg relative">
@@ -74,6 +91,8 @@ const FilterPopUp: React.FC<filterByBooks> = ({ onClose, onApplyFilters, books, 
           <label className="text-center text-5xl mb-4 font-reenie">
             Filtering
           </label>
+          <div className="mb-4">
+          <label htmlFor="avg_rating" className="block text-white text-sm font-bold mb-2">Author:</label>
           <select name="authorName" 
           value={filters.authorName} 
           onChange={handleSelectChange} 
@@ -83,37 +102,49 @@ const FilterPopUp: React.FC<filterByBooks> = ({ onClose, onApplyFilters, books, 
               <option key={author.authorID} value={author.author_name}>{author.author_name}</option>
             ))}
           </select>
+          </div>
         </div>
         <div className="mb-4">
-          <label htmlFor="avg_rating" className="text-white">Rating:</label>
-            <select
-              name="avg_rating"
-              value={filters.avg_rating}
-              onChange={handleSelectChange}
-              className="border border-gray-300 text-center rounded-md px-3 py-2 mb-2 w-full font-serif text-black">
-              <option value="" disabled>Select a Rating</option>
-              <option value="1">1</option>
-              <option value="2">2</option>
-              <option value="3">3</option>
-              <option value="4">4</option>
-              <option value="5">5</option>
-            </select>
-        </div>
+          <label htmlFor="bookName" className="block text-white text-sm font-bold mb-2">Title:</label>
+          <select name="bookName" 
+          value={filters.bookName} 
+          onChange={handleSelectChange} 
+          className="border border-gray-300 text-center rounded-md px-3 py-2 mb-2 w-full font-serif text-black">
+            <option value="" disabled>Select Book</option>
+            {books.map(book => (
+              <option key={book.bookID} value={book.bookName}>{book.bookName}</option>
+            ))}
+          </select>
+          </div>
         <div className="mb-4">
           <label className="block text-white text-sm font-bold mb-2">
-            Title
+            Genre: 
           </label>
-          <input type="text" name="bookName" value={filters.bookName} onChange={handleInputChange} className="border border-gray-300 text-center rounded-md px-3 py-2 mb-2 w-full font-serif text-black" />
+          {genres.map(genre => (
+            <div key={genre.genreID} className="mb-2">
+              <label htmlFor={genre.genre_name} className="inline-flex items-center">
+                <input
+                  type="checkbox"
+                  id={genre.genre_name}
+                  name={genre.genre_name}
+                  checked={filters.genres.includes(genre.genre_name)}
+                  onChange={handleCheckboxChange}
+                  className="form-checkbox h-5 w-5 text-emerald-600"
+                />
+                <span className="ml-2 text-white">{genre.genre_name}</span>
+              </label>
+            </div>
+          ))}  
         </div>
         <div className="mb-4">
           <label className="block text-white text-sm font-bold mb-2">
-            Genre
+           Minimum Average Rating:
           </label>
-          <input type="text" name="genreName" value={filters.genreName} onChange={handleInputChange} className="border border-gray-300 text-center rounded-md px-3 py-2 mb-2 w-full font-serif text-black" />
+          <input type="number" name="avg_rating" value={filters.avg_rating} onChange={handleInputChange} className="border border-gray-300 text-center rounded-md px-3 py-2 mb-2 w-full font-serif text-black" />
         </div>
         <div className="mb-4">
           <label className="block text-white text-sm font-bold mb-2">
-            # of Reviews
+            # of Reviews:
           </label>
           <input type="number" name="num_rating" value={filters.num_rating} onChange={handleInputChange} className="border border-gray-300 text-center rounded-md px-3 py-2 mb-2 w-full font-serif text-black" />
         </div>

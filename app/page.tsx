@@ -119,14 +119,16 @@ const fetchBooks = async () => {
       authorName: booksData[2], 
       genreName: booksData[3],
       synopsis: booksData[4],
-      avg_rating: booksData[5],
-      num_rating: booksData[6]
+      avg_rating: booksData[5] || 0,
+      num_rating: booksData[6] || 0
     }));
     setBooks(mappedBooks);
   } catch (error) {
     console.error('Error fetching books:', error);
   }
 };
+
+console.log(books);
 
   const handleOpenBookPopup = () => {
     setBookPopupOpen(true);
@@ -155,6 +157,7 @@ const fetchBooks = async () => {
 
   const handleApplyFilters = async (filters: any) => {
     try {
+      console.log(filters);
       const response = await axios.get('http://localhost:5001/api/books', {
         params: filters
       });
@@ -342,6 +345,15 @@ const handleDeleteReview = async (reviewID: number) => {
   }
 };
 
+const totalReviews = books.reduce((sum, book) => sum + book.num_rating, 0);
+
+const meanReviews = books.length === 0 ? 0 : totalReviews / books.length;
+
+const totalRating = books.reduce((sum, book) => sum + book.avg_rating, 0);
+
+const meanRating = books.length === 0 ? 0 : totalRating / books.length;
+
+
 return (
   <div className=" flex flex-col items-center min-h-screen">
     <h1 className="text-center text-4xl pt-7 font-reenie">PlantYourBooks 🪴 </h1>
@@ -416,7 +428,7 @@ return (
         />
         }
       {isFilterPopupOpen && 
-        <FilterPopUp onClose={handleCloseFilterPopup} onApplyFilters={handleApplyFilters} books={books} authors={authors} />
+        <FilterPopUp onClose={handleCloseFilterPopup} onApplyFilters={handleApplyFilters} books={books} authors={authors} genres={genres} />
       }
   
   <div className="container">
@@ -525,7 +537,6 @@ return (
   </ul>
 </div>
 
-
 <div className="container">
   <div>
   <h1 className="text-4xl mb-2 text-white font-reenie inline">Books</h1>
@@ -538,10 +549,16 @@ return (
   </div>
   {showMessage && <div className='mb-4 bold'>
     {books.length === 1 ? (
-    <div className='mb-4 bold'>1 entry matched your filter!</div>
+    <div className='mb-4 bold'>1 entry matched your filter! <br/>
+    Average Number of Reviews: {meanReviews} <br/>
+    Average Rating Received: {meanRating}/5 <br/>
+    </div>
+
   ) : (
     <div className='mb-4 bold'>
       {books.length} entries matched your filter! <br/>
+      Average Number of Reviews: {meanReviews} <br/>
+      Average Rating Received: {meanRating}/5 <br/>
     </div>
   )}
   </div>}

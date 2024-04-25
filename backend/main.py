@@ -59,83 +59,145 @@ def create_tables():
     conn.commit()
     conn.close()
 
+def initialize_indexes():
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+
+    c.execute('''CREATE INDEX IF NOT EXISTS author_name_idx ON authors(author_name)''')
+    c.execute('''CREATE INDEX IF NOT EXISTS rating_idx ON reviews(rating)''')
+    c.execute('''CREATE INDEX IF NOT EXISTS title_idx ON books(book_name)''')
+    c.execute('''CREATE INDEX IF NOT EXISTS genres_idx ON genres(genre_name)''')
+    c.execute('''CREATE INDEX IF NOT EXISTS review_idx ON reviews(reviewID)''')
+    
+    conn.commit()
+    conn.close()
 
 @app.route('/api/users', methods=['GET'])
 def get_users():
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
-    c.execute('SELECT * FROM users')
-    users = c.fetchall()
-    conn.close()
-    return jsonify(users)
+    try:
+        c.execute("PRAGMA read_uncommitted = 1")
+        c.execute("BEGIN TRANSACTION")
+        c.execute('SELECT * FROM users')
+        users = c.fetchall()
+        c.execute("COMMIT")
+        conn.close()
+        return jsonify(users)
+    except Exception as e:
+        c.execute("ROLLBACK")
+        conn.close()
+        return jsonify({"error": str(e)}), 500
+
 
 @app.route('/api/books', methods=['GET'])
 def get_books():
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
-    print(request.args)
-    conditional = "WHERE"
-    args = tuple()
+    try:
+        c.execute("PRAGMA read_uncommitted = 1")
+        c.execute("BEGIN TRANSACTION")
+        conditional = "WHERE"
+        args = tuple()
+        genres = []
+        
+        for v in request.args.getlist("genres[]"):
+            if len(v) != 0:
+                genres.append(v)
 
-    for q, v in request.args.items():
-        if (q == "bookName") and (len(v)!=0):
-            q = "book_name"
-            conditional += f" B.{q} = ? AND"
-            args += (v,)
-        elif (q == "avg_rating" or q == 'num_rating') and (len(v)!=0):
-            conditional+=f" {q} > ? AND"
-            args += (int(v), )
-        elif (q == "authorName") and (len(v)!=0):
-            q = "author_name"
-            conditional += f" A.{q} = ? AND"
-            args += (v,)
-        elif (len(v) != 0):
-            q = "genre_name"
-            conditional += f" G.{q} = ? AND"
-            args += (v,)
-    #print(conditional)
-    print(args)
-    if (conditional != "WHERE"):
-        conditional = conditional[:-3]
-    else:
-        conditional = ""
-    
-    query = f'''SELECT B.bookID, B.book_name, A.author_name, G.genre_name, B.synopsis,
-              (SELECT AVG(rating) FROM reviews WHERE bookID=B.bookID) AS avg_rating,
-              (SELECT COUNT(*) FROM reviews WHERE bookID=B.bookID) AS num_rating
-              FROM books B JOIN authors A ON A.authorID = B.authorID JOIN genres G ON g.genreID = b.genreID {conditional}'''
-    print(query)
-    c.execute(query, args)
-    books = c.fetchall()
-    conn.close()
-    return jsonify(books)
+        for genre in genres:
+            conditional += " G.genre_name = ? OR"
+            args += (genre, )
+        
+        if conditional != "WHERE":
+            conditional = conditional[:-2]
+            conditional += "AND"
+
+        for q, v in request.args.items():
+            if (q != "genres[]"):
+                if (q == "bookName") and (len(v)!=0):
+                    q = "book_name"
+                    conditional += f" B.{q} = ? AND"
+                    args += (v,)
+                elif (q == "avg_rating" or q == 'num_rating') and (len(v)!=0):
+                    conditional+=f" {q} > ? AND"
+                    args += (float(v), )
+                elif (q == "authorName") and (len(v)!=0):
+                    q = "author_name"
+                    conditional += f" A.{q} = ? AND"
+                    args += (v,)
+
+        if (conditional != "WHERE"):
+            conditional = conditional[:-3]
+        else:
+            conditional = ""
+        
+        query = f'''SELECT B.bookID, B.book_name, A.author_name, G.genre_name, B.synopsis,
+                (SELECT AVG(rating) FROM reviews WHERE bookID=B.bookID) AS avg_rating,
+                (SELECT COUNT(*) FROM reviews WHERE bookID=B.bookID) AS num_rating
+                FROM books B JOIN authors A ON A.authorID = B.authorID JOIN genres G ON g.genreID = b.genreID {conditional}'''
+
+        c.execute(query, args)
+        books = c.fetchall()
+        c.execute("COMMIT")
+        conn.close()
+        return jsonify(books)
+    except Exception as e:
+        c.execute("ROLLBACK")
+        conn.close()
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/api/reviews', methods=['GET'])
 def get_reviews():
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
-    c.execute('SELECT R.reviewID, U.username, B.book_name, R.rating, R.review, R.review_date FROM reviews R JOIN users U ON U.userID = R.userID JOIN books B ON B.bookID = R.bookID')
-    reviews = c.fetchall()
-    conn.close()
-    return jsonify(reviews)
+    try:
+        c.execute("PRAGMA read_uncommitted = 1")
+        c.execute("BEGIN TRANSACTION")
+        c.execute('SELECT R.reviewID, U.username, B.book_name, R.rating, R.review, R.review_date FROM reviews R JOIN users U ON U.userID = R.userID JOIN books B ON B.bookID = R.bookID')
+        reviews = c.fetchall()
+        c.execute("COMMIT")
+        conn.close()
+        return jsonify(reviews)
+    except Exception as e:
+        c.execute("ROLLBACK")
+        conn.close()
+        return jsonify({"error": str(e)}), 500
+
 
 @app.route('/api/genres', methods=['GET'])
 def get_genres():
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
-    c.execute('SELECT * FROM genres')
-    genres = c.fetchall()
-    conn.close()
-    return jsonify(genres)
+    try:
+        c.execute("PRAGMA read_uncommitted = 1")
+        c.execute("BEGIN TRANSACTION")
+        c.execute('SELECT * FROM genres')
+        genres = c.fetchall()
+        c.execute("COMMIT")
+        conn.close()
+        return jsonify(genres)
+    except Exception as e:
+        c.execute("ROLLBACK")
+        conn.close()
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/api/authors', methods=['GET'])
 def get_authors():
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
-    c.execute('SELECT * FROM authors')
-    authors = c.fetchall()
-    conn.close()
-    return jsonify(authors)
+    try:
+        c.execute("PRAGMA read_uncommitted = 1")
+        c.execute("BEGIN TRANSACTION")
+        c.execute('SELECT * FROM authors')
+        authors = c.fetchall()
+        c.execute("COMMIT")
+        conn.close()
+        return jsonify(authors)
+    except Exception as e:
+        c.execute("ROLLBACK")
+        conn.close()
+        return jsonify({"error": str(e)}), 500
 
 
 
@@ -156,14 +218,19 @@ def post_added_users():
 
         conn = sqlite3.connect(DB_FILE)
         c = conn.cursor()
+        c.execute("PRAGMA read_uncommitted = 1")
+        c.execute("BEGIN TRANSACTION")
 
         c.execute("INSERT INTO users (username, email, join_date, bio) VALUES (?, ?, ?, ?)",
                   (username, email, join_date, bio))
+        c.execute("COMMIT") 
         conn.commit()
         conn.close()
 
         return jsonify({"message": "User added successfully"}), 200
     except Exception as e:
+        c.execute("ROLLBACK")
+        conn.close()
         return jsonify({"error": str(e)}), 500
     
 @app.route('/api/books', methods=["POST"])
@@ -177,15 +244,20 @@ def post_added_books():
 
         conn = sqlite3.connect(DB_FILE)
         c = conn.cursor()
+        c.execute("PRAGMA read_uncommitted = 1")
+        c.execute("BEGIN TRANSACTION")
 
         c.execute('''INSERT INTO books (book_name, authorID, genreID, synopsis)
                         VALUES (?, (SELECT min(authorID) FROM authors WHERE author_name = ?), (SELECT min(genreID) FROM genres WHERE genre_name = ?), ?)''',
                   (book, author, genre, synopsis))
+        c.execute("COMMIT")
         conn.commit()
         conn.close()
 
         return jsonify({"message": "Book added successfully"}), 200
     except Exception as e:
+        c.execute("ROLLBACK")
+        conn.close()
         return jsonify({"error": str(e)}), 500
     
 @app.route('/api/reviews', methods=["POST"])
@@ -202,15 +274,19 @@ def post_added_reviews():
         conn = sqlite3.connect(DB_FILE)
         c = conn.cursor()
 
+        c.execute("PRAGMA read_uncommitted = 1")
+        c.execute("BEGIN TRANSACTION")
         c.execute('''INSERT INTO reviews (userID, bookID, rating, review, review_date) 
                         VALUES ((SELECT min(userID) FROM users WHERE username = ?), (SELECT min(bookID) FROM books WHERE book_name = ?), ?, ?, ?)''',
                   (user, book, rating, review, review_date))
-        
+        c.execute("COMMIT")
         conn.commit()
         conn.close()
 
         return jsonify({"message": "Review added successfully"}), 200
     except Exception as e:
+        c.execute("ROLLBACK")
+        conn.close()
         return jsonify({"error": str(e)}), 500
 
 @app.route('/api/genres', methods=["POST"])
@@ -221,14 +297,18 @@ def post_added_genres():
         genre_name = data.get('genre_name')
         conn = sqlite3.connect(DB_FILE)
         c = conn.cursor()
-
+        c.execute("PRAGMA read_uncommitted = 1")
+        c.execute("BEGIN TRANSACTION")
         c.execute("INSERT INTO genres (genre_name) VALUES (?)",
                   (genre_name,))
+        c.execute("COMMIT")
         conn.commit()
         conn.close()
 
         return jsonify({"message": "Genre added successfully"}), 200
     except Exception as e:
+        c.execute("ROLLBACK")
+        conn.close()
         return jsonify({"error": str(e)}), 500
 
 @app.route('/api/authors', methods=["POST"])
@@ -239,14 +319,18 @@ def post_added_authors():
         author_name = data.get('author_name')
         conn = sqlite3.connect(DB_FILE)
         c = conn.cursor()
-
+        c.execute("PRAGMA read_uncommitted = 1")
+        c.execute("BEGIN TRANSACTION")
         c.execute("INSERT INTO authors (author_name) VALUES (?)",
                   (author_name,))
+        c.execute("COMMIT") 
         conn.commit()
         conn.close()
 
         return jsonify({"message": "Author added successfully"}), 200
     except Exception as e:
+        c.execute("ROLLBACK")
+        conn.close()
         return jsonify({"error": str(e)}), 500
     
 
@@ -257,11 +341,16 @@ def delete_user(user_id):
     try:
         conn = sqlite3.connect(DB_FILE)
         c = conn.cursor()
+        c.execute("PRAGMA read_uncommitted = 1")
+        c.execute("BEGIN TRANSACTION")
         c.execute("DELETE FROM users WHERE userID = ?", (user_id,))
+        c.execute("COMMIT")
         conn.commit()
         conn.close()
         return jsonify({"message": "User deleted successfully"}), 200
     except Exception as e:
+        c.execute("ROLLBACK")
+        conn.close()
         return jsonify({"error": str(e)}), 500
     
 @app.route('/api/books/<int:book_id>', methods=['DELETE'])
@@ -269,11 +358,16 @@ def delete_book(book_id):
     try:
         conn = sqlite3.connect(DB_FILE)
         c = conn.cursor()
+        c.execute("PRAGMA read_uncommitted = 1")
+        c.execute("BEGIN TRANSACTION")
         c.execute("DELETE FROM books WHERE bookID = ?", (book_id,))
+        c.execute("COMMIT")
         conn.commit()
         conn.close()
         return jsonify({"message": "Book deleted successfully"}), 200
     except Exception as e:
+        c.execute("ROLLBACK")
+        conn.close()
         return jsonify({"error": str(e)}), 500
     
     
@@ -282,11 +376,16 @@ def delete_review(review_id):
     try:
         conn = sqlite3.connect(DB_FILE)
         c = conn.cursor()
+        c.execute("PRAGMA read_uncommitted = 1")
+        c.execute("BEGIN TRANSACTION")
         c.execute("DELETE FROM reviews WHERE reviewID = ?", (review_id,))
+        c.execute("COMMIT")
         conn.commit()
         conn.close()
         return jsonify({"message": "Review deleted successfully"}), 200
     except Exception as e:
+        c.execute("ROLLBACK")
+        conn.close()
         return jsonify({"error": str(e)}), 500
     
 @app.route('/api/genres/<int:genre_id>', methods=['DELETE'])
@@ -294,15 +393,17 @@ def delete_genre(genre_id):
     try:
         conn = sqlite3.connect(DB_FILE)
         c = conn.cursor()
-    
+        c.execute("PRAGMA read_uncommitted = 1")
+        c.execute("BEGIN TRANSACTION")
         c.execute("UPDATE books SET genreID = NULL WHERE genreID = ?", (genre_id,))
-        
         c.execute("DELETE FROM genres WHERE genreID = ?", (genre_id,))
-        
+        c.execute("COMMIT")
         conn.commit()
         conn.close()
         return jsonify({"message": "Genre deleted successfully"}), 200
     except Exception as e:
+        c.execute("ROLLBACK")
+        conn.close()
         return jsonify({"error": str(e)}), 500
     
 @app.route('/api/authors/<int:author_id>', methods=['DELETE'])
@@ -310,15 +411,17 @@ def delete_author(author_id):
     try:
         conn = sqlite3.connect(DB_FILE)
         c = conn.cursor()
-        
+        c.execute("PRAGMA read_uncommitted = 1")
+        c.execute("BEGIN TRANSACTION")
         c.execute("UPDATE books SET authorID = NULL WHERE authorID = ?", (author_id,))
-        
         c.execute("DELETE FROM authors WHERE authorID = ?", (author_id,))
-        
+        c.execute("COMMIT")
         conn.commit()
         conn.close()
         return jsonify({"message": "Author deleted successfully"}), 200
     except Exception as e:
+        c.execute("ROLLBACK")
+        conn.close()
         return jsonify({"error": str(e)}), 500
     
 #EDITS
@@ -336,17 +439,22 @@ def edit_user():
         
         conn = sqlite3.connect(DB_FILE)
         c = conn.cursor()
-
+        c.execute("PRAGMA read_uncommitted = 1")
+        c.execute("BEGIN TRANSACTION")
         c.execute("UPDATE users SET username=?, email=?, join_date=?, bio=? WHERE userID=?",
                   (username, email, join_date, bio, userID))
+        c.execute("COMMIT")
         conn.commit()
         conn.close()
 
         return jsonify({"message": "User updated successfully"}), 200
     except Exception as e:
+        c.execute("ROLLBACK")
+        conn.close()
         return jsonify({"error": str(e)}), 500
 
 
 if __name__ == '__main__':
     create_tables()
+    initialize_indexes()
     app.run(debug=True, port=5001)
