@@ -144,7 +144,7 @@ const FilterPopUp: React.FC<filterByBooks> = ({ onClose, onApplyFilters, books, 
         </div>
         <div className="mb-4">
           <label className="block text-white text-sm font-bold mb-2">
-            # of Reviews:
+            Minimum # of Reviews:
           </label>
           <input type="number" name="num_rating" value={filters.num_rating} onChange={handleInputChange} className="border border-gray-300 text-center rounded-md px-3 py-2 mb-2 w-full font-serif text-black" />
         </div>

@@ -103,6 +103,7 @@ const handleEditUser = async (editedUser: Users) => {
   try {
     const response = await axios.put(`http://localhost:5001/api/users`, editedUser);
     fetchUsers(); 
+    fetchReviews();
     setIsUserEditPopupOpen(false);
   } catch (error) {
     console.error('Error editing user:', error);
@@ -272,6 +273,9 @@ const handleAddBook = async (bookData: Books) => {
     await axios.post('http://localhost:5001/api/books', bookData);
     handleCloseBookPopup();
     fetchBooks();
+    fetchAuthors();
+    fetchGenres();
+    fetchReviews();
   } catch (error) {
     console.error('Error adding book:', error);
   }
@@ -281,6 +285,9 @@ const handleDeleteBook = async (bookID: number) => {
   try {
     await axios.delete(`http://localhost:5001/api/books/${bookID}`);
     fetchBooks();
+    fetchAuthors();
+    fetchGenres();
+    fetchReviews();
   } catch (error) {
     console.error('Error deleting book:', error);
   }
@@ -291,6 +298,9 @@ const handleAddGenre = async (genreName: string) => {
     await axios.post('http://localhost:5001/api/genres', { genre_name: genreName });
     handleCloseGenrePopup();
     fetchGenres();
+    fetchAuthors();
+    fetchBooks();
+    fetchReviews();
   } catch (error) {
     console.error('Error adding genre:', error);
   }
@@ -300,6 +310,9 @@ const handleDeleteGenre = async (genreID: number) => {
   try {
     await axios.delete(`http://localhost:5001/api/genres/${genreID}`);
     fetchGenres();
+    fetchAuthors();
+    fetchBooks();
+    fetchReviews();
   } catch (error) {
     console.error('Error deleting genre:', error);
   }
@@ -310,6 +323,9 @@ const handleAddAuthor = async (authorName: string) => {
     await axios.post('http://localhost:5001/api/authors', { author_name: authorName });
     handleCloseAuthorPopup();
     fetchAuthors();
+    fetchBooks();
+    fetchGenres();
+    fetchReviews();
   } catch (error) {
     console.error('Error adding author:', error);
   }
@@ -319,6 +335,9 @@ const handleDeleteAuthor = async (authorID: number) => {
   try {
     await axios.delete(`http://localhost:5001/api/authors/${authorID}`);
     fetchAuthors();
+    fetchBooks();
+    fetchGenres();
+    fetchReviews();
   } catch (error) {
     console.error('Error deleting author:', error);
   }
